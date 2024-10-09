@@ -1,0 +1,84 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: twingate
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  destination:
+    namespace: twingate
+    server: "https://kubernetes.default.svc"
+  project: default
+  source:
+    path: deploy/twingate-operator
+    repoURL: https://github.com/Twingate/kubernetes-operator
+    targetRevision: HEAD
+    helm:
+      values: |
+        twingateOperator:
+          apiKey: ""
+          network: ""
+          remoteNetworkId: ""
+          logFormat: "json"
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace=true
+---
+apiVersion: twingate.com/v1beta
+kind: TwingateConnector
+metadata:
+  name: incluster-connector
+  namespace: twingate
+spec:
+  imagePolicy:
+    provider: "dockerhub"
+    schedule: "0 0 * * *"
+    repository: twingate/connector
+    version: "^1.0.0"
+---
+apiVersion: twingate.com/v1beta
+kind: TwingateResource
+metadata:
+  name: argocd
+  namespace: twingate
+spec:
+  name: x - argocd
+  address: argocd-server.argocd
+  alias: x.x
+---
+apiVersion: twingate.com/v1beta
+kind: TwingateResourceAccess
+metadata:
+  name: argocd-access
+  namespace: twingate
+spec:
+  resourceRef:
+    name: argocd
+    namespace: twingate
+  principalId: x
+---
+apiVersion: twingate.com/v1beta
+kind: TwingateResource
+metadata:
+  name: kyuubi-thrift
+  namespace: twingate
+spec:
+  name: mordor - kyuubi-thrift
+  address: kyuubi-thrift-binary.kyuubi.svc.cluster.local
+  alias: x.x
+---
+apiVersion: twingate.com/v1beta
+kind: TwingateResourceAccess
+metadata:
+  name: kyuubi-thrift-access
+  namespace: twingate
+spec:
+  resourceRef:
+    name: kyuubi-thrift
+    namespace: twingate
+  principalId: x

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hive-metastore
+description: A Helm chart for deploying a hive metastore server
+type: application
+version: 0.0.1
+appVersion: "4.0.0"

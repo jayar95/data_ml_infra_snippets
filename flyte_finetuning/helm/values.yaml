@@ -1,0 +1,58 @@
+configuration:
+  database:
+    username:
+    host:
+    dbname:
+    password:
+    port: 25060
+    options: sslmode=require
+  storage:
+    metadataContainer: flyte
+    userDataContainer: flyte
+    provider: s3
+    providerConfig:
+      s3:
+        authType: "accesskey"
+        endpoint: "https://wrkr-infra-sbx.nyc3.digitaloceanspaces.com"
+        accessKey: ""
+        secretKey: ""
+        disableSSL: "false"
+        secure: "true"
+        v2Signing: "true"
+
+  inline:
+    plugins:
+      k8s:
+        gpu-device-node-label: "gpu.nvidia.com/class"
+        inject-finalizer: true
+        default-env-vars:
+          - FLYTE_AWS_ENDPOINT: "https://wrkr-infra-sbx.nyc3.digitaloceanspaces.com"
+          - FLYTE_AWS_ACCESS_KEY_ID: ""
+          - FLYTE_AWS_SECRET_ACCESS_KEY: ""
+
+    task_resources:
+      defaults:
+        cpu: 100m
+        memory: 500Mi
+      limits:
+        cpu: 12
+        memory: 64Gi
+
+serviceAccount:
+  create: true
+
+enabled_plugins:
+  tasks:
+    task-plugins:
+      enabled-plugins:
+        - container
+        - sidecar
+        - k8s-array
+        - agent-service
+        - echo
+        - pytorch
+      default-for-task-types:
+        container: container
+        sidecar: sidecar
+        container_array: k8s-array
+        pytorch: pytorch

@@ -1,0 +1,18 @@
+[project]
+name = "llm-fine-tune-flyte"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Jorge Lopez Johnson", email = "jorge@lopezjohnson.com" }
+]
+dependencies = [
+    "flytekit>=1.13.5",
+    "flytekitplugins-envd>=1.13.5",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[tool.rye]
+managed = true
+virtual = true
+dev-dependencies = []

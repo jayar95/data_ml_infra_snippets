@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: deploykf-app-of-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: deploykf-app-of-apps
+    app.kubernetes.io/part-of: deploykf
+spec:
+  project: "default"
+  source:
+    repoURL: "https://github.com/deployKF/deployKF.git"
+    targetRevision: "v0.1.4"
+    path: "."
+    plugin:
+      name: "deploykf"
+      parameters:
+        - name: "source_version"
+          string: "0.1.4"
+        - name: "values_files"
+          array:
+            - "./sample-values.yaml"
+        - name: "values"
+          string: |
+            argocd:
+              namespace: argocd
+              project: default
+
+            deploykf_dependencies:
+              cert_manager:
+                enabled: false
+                clusterIssuer:
+                  issuerName: letsencrypt-prod
+
+            deploykf_core:
+              deploykf_auth:
+                dex:
+                  connectors:
+                    - type: github
+                      id: github
+                      name: GitHub
+                      config:
+                        clientID:
+                        clientSecret:
+                        redirectURI: https://x.x/dex/callback
+                        orgs:
+                          - name: x
+
+              deploykf_istio_gateway:
+                gateway:
+                  hostname: x.x
+                  ports:
+                    http: 80
+                    https: 443
+                gatewayService:
+                  name: "deploykf-gateway"
+                  type: "ClusterIP"
+                  annotations: {}
+
+              deploykf_profiles_generator:
+                users:
+                - id: jorge
+                  email:
+                groups:
+                - id: xdmn-admins
+                  users:
+                    - jorge
+                profiles:
+                - name: xdmn-prod
+                  members:
+                    - group: xdmn-admins
+                      access:
+                        role: edit
+                        notebooksAccess: true
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: "argocd"

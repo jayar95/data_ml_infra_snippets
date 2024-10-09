@@ -1,0 +1,105 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyuubi
+  namespace: argocd
+spec:
+  destination:
+    namespace: kyuubi
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    helm:
+      parameters:
+      - name: image.pullPolicy
+        value: Always
+      values: |-
+        livenessProbe:
+          enabled: false
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 10
+          successThreshold: 1
+        readinessProbe:
+          enabled: false
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 30
+          failureThreshold: 10
+          successThreshold: 1
+        rbac:
+          rules:
+            - apiGroups: [""] 
+              resources: ["pods", "persistentvolumeclaims"]
+              verbs: ["*"]
+            - apiGroups: [""] 
+              resources: ["services", "configmaps", "secrets"]
+              verbs: ["create", "get", "delete", "update", "patch", "delete"]
+            - apiGroups: ["extensions", "networking.k8s.io"] 
+              resources: ["ingresses"]
+              verbs: ["create", "get", "delete"]
+            - apiGroups: [""] 
+              resources: ["nodes"]
+              verbs: ["get"]
+            - apiGroups: [""] 
+              resources: ["events"]
+              verbs: ["create", "update", "patch"]
+            - apiGroups: [""] 
+              resources: ["resourcequotas"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apiextensions.k8s.io"] 
+              resources: ["customresourcedefinitions"]
+              verbs: ["get"]
+            - apiGroups: ["admissionregistration.k8s.io"] 
+              resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"]
+              verbs: ["create", "get", "update", "delete"]
+        image:
+          repository: jayar95/serverless-kyuubi
+          tag: latest
+        kyuubiConf:
+          kyuubiEnv: |
+            #!/usr/bin/env bash
+            export SPARK_HOME=/opt/spark
+            export FLINK_HOME=/opt/flink
+            export HIVE_HOME=/opt/hive
+          kyuubiDefaults: |
+            kyuubi.session.engine.initialize.timeout=PT10M
+            hive.metastore.uris=thrift://hive-hive-metastore.hive-metastore:9083
+            spark.hive.metastore.uris=thrift://hive-hive-metastore.hive-metastore:9083
+            spark.submit.proxyUser.allowCustomClasspathInClusterMode=true
+        sparkConf:
+          sparkDefaults: |
+            spark.kubernetes.namespace=kyuubi
+            spark.kubernetes.authenticate.driver.serviceAccountName=kyuubi
+            spark.kubernetes.file.upload.path=s3a://bucket/spark
+            # Delta
+            spark.submit.deployMode=cluster
+            spark.kubernetes.container.image=jayar95/serverless-spark
+            spark.submit.proxyUser.allowCustomClasspathInClusterMode=true
+            spark.jars.packages=org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.603,org.apache.spark:spark-hadoop-cloud_2.12:3.5.1
+            spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
+            spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
+            # S3A configuration
+            spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+            spark.hadoop.fs.s3a.endpoint=https://redacted.com
+            spark.hadoop.fs.s3a.access.key=redacted
+            spark.hadoop.fs.s3a.secret.key=redacted
+            spark.hadoop.fs.s3a.path.style.access=true
+            spark.hadoop.fs.s3a.fast.upload=true
+            spark.driver.extraJavaOptions=-Divy.cache.dir=/tmp -Divy.home=/tmp
+    path: charts/kyuubi
+    repoURL: https://github.com/apache/kyuubi/
+    targetRevision: HEAD
+  syncPolicy:
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s
+      limit: 2
+    syncOptions:
+    - PruneLast=true
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+    - Replace=true

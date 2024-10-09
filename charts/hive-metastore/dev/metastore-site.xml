@@ -1,0 +1,56 @@
+<configuration>
+    <property>
+        <name>metastore.thrift.uris</name>
+        <value>{{ .Values.dev.conf.metastore_thrift_uris }}</value>
+        <description>Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore.</description>
+    </property>
+    <property>
+        <name>metastore.task.threads.always</name>
+        <value>org.apache.hadoop.hive.metastore.events.EventCleanerTask,org.apache.hadoop.hive.metastore.MaterializationsCacheCleanerTask</value>
+    </property>
+    <property>
+        <name>metastore.expression.proxy</name>
+        <value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
+    </property>
+    <property>
+        <name>metastore.warehouse.dir</name>
+        <value>{{ .Values.dev.conf.metastore_warehouse_dir }}</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>{{ .Values.dev.conf.db_connection_driver_name }}</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>{{ .Values.dev.conf.db_connection_url }}</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>{{ .Values.dev.conf.db_connection_username }}</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>{{ .Values.dev.conf.db_connection_password }}</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.access.key</name>
+        <value>{{ .Values.dev.conf.s3_access_key }}</value>
+    </property>
+    <property>
+        <name>fs.s3a.secret.key</name>
+        <value>{{ .Values.dev.conf.s3_secret_key }}</value>
+    </property>
+    <property>
+        <name>fs.s3a.endpoint</name>
+        <value>{{ .Values.dev.conf.s3_endpoint }}</value>
+    </property>
+    <property>
+        <name>fs.s3a.path.style.access</name>
+        <value>true</value>
+    </property>
+
+</configuration>
